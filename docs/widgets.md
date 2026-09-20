@@ -9,6 +9,7 @@ Dashy has support for displaying dynamic content in the form of widgets. There a
   - [Weather](#weather)
   - [Weather Forecast](#weather-forecast)
   - [RSS Feed](#rss-feed)
+  - [Calendar](#calendar)
   - [Image](#image)
   - [Public IP Address](#public-ip)
   - [IP Blacklist Checker](#ip-blacklist)
@@ -24,6 +25,7 @@ Dashy has support for displaying dynamic content in the form of widgets. There a
   - [Public Holidays](#public-holidays)
   - [Covid-19 Status](#covid-19-status)
   - [Sports Scores](#sports-scores)
+  - [Live Tennis](#live-tennis)
   - [News Headlines](#news-headlines)
   - [TFL Status](#tfl-status)
   - [Stock Price History](#stock-price-history)
@@ -72,8 +74,8 @@ Dashy has support for displaying dynamic content in the form of widgets. There a
   - [Drone CI Build](#drone-ci-builds)
   - [Filebrowser](#filebrowser)
   - [Linkding](#linkding)
-  - [Uptime Kuma](#uptime-kuma)
   - [Uptime Kuma Status Page](#uptime-kuma-status-page)
+  - [Uptime Kuma](#uptime-kuma)
   - [Tactical RMM](#tactical-rmm)
 - **[System Resource Monitoring](#system-resource-monitoring)**
   - [CPU Usage Current](#current-cpu-usage)
@@ -102,6 +104,7 @@ Dashy has support for displaying dynamic content in the form of widgets. There a
   - [Widget Usage Guide](#widget-usage-guide)
   - [Continuous Updates](#continuous-updates)
   - [Proxying Requests](#proxying-requests)
+  - [Ignoring Certificate Errors](#ignoring-certificate-errors)
   - [Handling Secrets](#handling-secrets)
   - [Setting Timeout](#setting-timeout)
   - [Adding Labels](#adding-labels)
@@ -261,6 +264,83 @@ Display news and updates from any RSS-enabled service.
 
 ---
 
+### Calendar
+
+Shows upcoming events from any calendar that publishes an iCalendar (`.ics`) feed. Works with Nextcloud, Google, Proton, iCloud, Outlook, Radicale,  Baïkal, etc.
+
+Note that this needs to be proxied through Dashy, since calendar providers don't send CORS headers.
+`webcal://` links are accepted, same as `https://`.
+Recurring events, exceptions and moved occurrences are all expanded, and times are converted to your browser's timezone.
+Events already underway stay listed until they end, and calendars with no `name` set use the name their feed publishes.
+
+#### Options
+
+**Field** | **Type** | **Required** | **Description**
+--- | --- | --- | ---
+**`calendarUrl`** | `string` or `array` |  Required | The URL of your ICS feed. Pass an array to combine several, each either a URL or an object with `url`, plus optional `name` and `color`
+**`days`** | `number` |  _Optional_ | How many days ahead to show. Min: `1`, max: `365`. Defaults to `7`
+**`limit`** | `number` |  _Optional_ | Maximum number of events to show. Defaults to `10`
+**`hideAllDay`** | `boolean` |  _Optional_ | If `true`, all-day events are omitted
+**`showLocation`** | `boolean` |  _Optional_ | If `true`, shows each event's location under its title
+**`showDescription`** | `boolean` |  _Optional_ | If `true`, shows each event's description under its title
+**`startDate`** | `string` |  _Optional_ | Show events from this date instead of today, e.g. `2026-09-03`
+
+#### Example
+
+```yaml
+- type: calendar
+  options:
+    calendarUrl: https://nextcloud.example.com/remote.php/dav/public-calendars/AbCdEf123?export
+    days: 14
+```
+
+Combining calendars, and colour-coding them:
+
+```yaml
+- type: calendar
+  options:
+    limit: 15
+    calendarUrl:
+      - url: https://calendar.google.com/calendar/ical/xxxx/private-xxxx/basic.ics
+        name: Personal
+        color: '#5cabca'
+      - url: webcal://p12-calendars.icloud.com/published/2/xxxx
+        name: Family
+        color: '#e8j54a'
+```
+
+#### Getting your feed URL
+
+**Provider** | **Where to find it**
+--- | ---
+Nextcloud | Calendar → **⋯** → _Copy subscription link_, then append `?export`. Or, for a private calendar, use `https://user:app-password@host/remote.php/dav/calendars/user/calendar-name?export`
+Google | Settings → _Settings for my calendars_ → **Integrate calendar** → _Secret address in iCal format_
+Proton | Settings → Calendars → _Share with anyone_. Requires a paid plan, and the link must be set to **Full view**
+iCloud | Right-click the calendar → _Share Calendar_ → **Public Calendar**
+Outlook | Settings → Calendar → _Shared calendars_ → **Publish a calendar**, choosing the ICS link
+
+#### Keeping your URL private
+
+A calendar URL is a password in disguise: anyone who has it can read your calendar. Since widget options are sent to the browser, don't put a secret feed URL directly in your config if other people can view your dashboard. Instead, set it as an environment variable prefixed with `DASHY_`, and reference the name:
+
+```yaml
+- type: calendar
+  options:
+    calendarUrl: DASHY_MY_CALENDAR
+```
+
+The proxy substitutes the real value server-side, so the URL never reaches the browser.
+
+#### Info
+
+- **CORS**: 🔴 Proxied
+- **Auth**: 🟠 Optional (a secret or authenticated feed URL, where the calendar isn't public)
+- **Price**: 🟢 Free
+- **Host**: Self-Hosted or Managed
+- **Privacy**: _No third-party service is used; Dashy fetches your feed directly_
+
+---
+
 ### Image
 
 Displays an image.
@@ -405,7 +485,7 @@ Keep an eye on the expiry dates of your domain names, using public whois records
 **Field** | **Type** | **Required** | **Description**
 --- | --- | --- | ---
 **`domain`** | `string` |  Required | The domain to check
-**`apiKey`** | `string` |  Required | You can get your free API key from [my.whoapi.com](https://my.whoapi.com/user/signup)
+**`apiKey`** | `string` |  Required | Get your API key from [my.whoapi.com](https://my.whoapi.com/user/signup), requires a [paid plan](https://whoapi.com/whois-api-pricing/)
 **`showFullInfo`** | `boolean` |  _Optional_ | If set to true, the toggle-full-info panel will be open by default
 
 #### Example
@@ -426,7 +506,7 @@ Keep an eye on the expiry dates of your domain names, using public whois records
 
 - **CORS**: 🟢 Enabled
 - **Auth**: 🔴 Required
-- **Price**: 🟠 Free Plan (10,000 requests)
+- **Price**: 🔴 Paid only, no free plan
 - **Host**: Managed Instance Only
 - **Privacy**: _See [WhoAPI Privacy Policy](https://whoapi.com/privacy-policy/)_
 
@@ -859,6 +939,53 @@ Show recent scores and upcoming matches from your favorite sports team. Data is 
 
 ---
 
+### Live Tennis
+
+Live tennis scores from the ATP and WTA tours, updating in place. Each match shows both players with their per-set game scores, the current game points, and a marker against whoever is serving. Set the `status` option to show upcoming or recently finished matches instead. Data is from [LiveTennisAPI](https://livetennisapi.com/).
+
+<p align="center"><img width="400" src="https://pixelflare.cc/alicia/dashy/tennis-scores" /></p>
+
+#### Options
+
+**Field** | **Type** | **Required** | **Description**
+--- | --- | --- | ---
+**`apiKey`** | `string` | Required | Your LiveTennisAPI key. The [free plan](https://livetennisapi.com/subscribe/free) needs no card, and is enough for this widget
+**`status`** | `string` | _Optional_ | Which matches to show: `live`, `upcoming` or `completed`. Defaults to `live`
+**`limit`** | `number` | _Optional_ | Maximum number of matches to show, defaults to `5`
+**`hideRankings`** | `boolean` | _Optional_ | Set to `true` to hide each player's world ranking, defaults to `false`
+**`hideTournament`** | `boolean` | _Optional_ | Set to `true` to hide the tournament name, defaults to `false`
+
+#### Example
+
+```yaml
+- type: live-tennis
+  options:
+    apiKey: twjp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    limit: 5
+```
+
+Showing the next matches due on court, instead of those in play:
+
+```yaml
+- type: live-tennis
+  options:
+    apiKey: twjp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    status: upcoming
+    hideRankings: true
+```
+
+#### Info
+
+- **CORS**: 🟢 Enabled (no proxy needed)
+- **Auth**: 🔴 Required
+- **Price**: 🟠 Free plan (30 requests / minute)
+- **Host**: Managed Instance Only
+- **Privacy**: [LiveTennisAPI Privacy Policy](https://livetennisapi.com/privacy)
+
+The widget refreshes every 60 seconds by default, which sits comfortably inside the free plan's rate limit. You can change this with the standard `updateInterval` option, but note that several widgets sharing one key all count against the same limit.
+
+---
+
 ### News Headlines
 
 Displays the latest news, click to read full article. Date is fetched from various news sources using [Currents API](https://currentsapi.services/en)
@@ -1188,38 +1315,51 @@ Displays currently trending projects on GitHub. Optionally specify a language an
 
 ### GitHub Profile Stats
 
-Display stats from your GitHub profile, using embedded cards from [anuraghazra/github-readme-stats](https://github.com/anuraghazra/github-readme-stats)
+Shows GitHub user stats (if `username`) and repos stats (for each repo in `repos`). Fetched from the GitHub API.
 
-<p align="center"><img width="380" src="https://pixelflare.cc/alicia/dashy/github-stats" /></p>
+<p align="center"><img width="600" src="https://pixelflare.cc/alicia/dashy/github-stats-widget" /></p>
 
 #### Options
 
 **Field** | **Type** | **Required** | **Description**
 --- | --- | --- | ---
-**`username`** | `string` |  Required | The GitHub username to fetch info for. E.g. `lissy93`. (Not required if `hideProfileCard` and `hideLanguagesCard` are both set to `true`)
-**`hideProfileCard`** | `boolean` |  _Optional_ | If set to `true`, the users profile card will not be shown. Defaults to `false`
-**`hideLanguagesCard`** | `boolean` |  _Optional_ | If set to `true`, the users top languages card will not be shown. Defaults to `false`
-**`repos`** | `array` |  _Optional_ | If you'd like to also display stats for some GitHub repositories, then add an array or repo names here. Specified as `[username]/[repo-name]`, e.g. `lissy93/dashy`
+**`username`** | `string` |  _Optional_ | A GitHub username, e.g. `lissy93`. If this is set, a profile card is shown, if it's unset the card isn't shown
+**`repos`** | `array` |  _Optional_ | A list of repositories to show stats for, each specified as `[owner]/[repo]`, e.g. `lissy93/dashy`
+**`token`** | `string` |  _Optional_ | An optional [GitHub token](https://github.com/settings/tokens). Used to raise the API rate limit from 60 to 5,000 requests per hour (can be set directly, or as an environment variable)
 
 #### Example
 
 ```yaml
 - type: github-profile-stats
   options:
-    username: Lissy93
-    hideLanguagesCard: true
+    username: lissy93
     repos:
     - lissy93/dashy
-    - lissy93/personal-security-checklist
-    - lissy93/twitter-sentiment-visualisation
+    - lissy93/portainer-templates
+    - lissy93/web-check
+```
+
+Or just show the user's profile card:
+```yaml
+- type: github-profile-stats
+  options:
+    username: octocat
+```
+
+Or just show repo(s)
+```yaml
+- type: github-profile-stats
+  options:
+    repos:
+    - lissy93/dashy
 ```
 
 #### Info
 
 - **CORS**: 🟢 Enabled
-- **Auth**: 🟢 Not Required
+- **Auth**: 🟡 Optional (a `token` raises the rate limit)
 - **Price**: 🟢 Free
-- **Host**: Managed Instance or Self-Hosted (see [anuraghazra/github-readme-stats](https://github.com/anuraghazra/github-readme-stats))
+- **Host**: GitHub ([docs.github.com/en/rest](https://docs.github.com/en/rest))
 - **Privacy**: _See [GitHub's Privacy Policy](https://docs.github.com/en/github/site-policy/github-privacy-statement)_
 
 ---
@@ -2729,6 +2869,43 @@ Linkding is a self-hosted bookmarking service, which has a clean interface and i
 
 ---
 
+### Uptime Kuma Status Page
+
+[Uptime Kuma](https://github.com/louislam/uptime-kuma) is an easy-to-use self-hosted monitoring tool.
+This widget displays the status of your Uptime Kuma monitors from a given status page, including their current history, uptime history, response times and recent failures.
+
+#### Options
+
+| **Field**          | **Type** | **Required** | **Description**                                                                   |
+| ------------------ | -------- | ------------ | --------------------------------------------------------------------------------- |
+| **`host`**         | `string` | Required     | The URL of the Uptime Kuma instance                                               |
+| **`slug`**         | `string` | Required     | The slug of the status page                                                       |
+| **`monitorNames`** | `string[]` | _Optional_   | Optional labels to override the monitor names from Uptime Kuma, in the same order as they appear on the status page |
+| **`hideHistory`**  | `boolean` | _Optional_   | Optionally hide the strip of recent heartbeats |
+| **`hideUptime`**   | `boolean` | _Optional_   | Optionally hide the 24-hour uptime percentage |
+| **`hideStatus`**   | `boolean` | _Optional_   | Optionally hide the up/ down status pill |
+| **`statusLabels`** | `object` | _Optional_   | Optional text overrides for the status pill, keyed by status: `up`, `down`, `pending`, `maintenance`, `unknown` |
+
+#### Example
+
+```yaml
+- type: uptime-kuma-status-page
+  useProxy: true
+  options:
+    host: https://uptime.as93.net
+    slug: domain-locker
+```
+
+#### Info
+
+- **CORS**: 🔴 Proxied (Uptime Kuma only sends CORS headers when running in development mode, so `useProxy: true` is required)
+- **Auth**: 🟢 Not Needed
+- **Price**: 🟢 Free
+- **Host**: Self-Hosted (see [Uptime Kuma](https://github.com/louislam/uptime-kuma) )
+- **Privacy**: _See [Uptime Kuma](https://github.com/louislam/uptime-kuma)_
+
+---
+
 ### Uptime Kuma
 
 [Uptime Kuma](https://github.com/louislam/uptime-kuma) is an easy-to-use self-hosted monitoring tool.
@@ -2739,6 +2916,12 @@ Linkding is a self-hosted bookmarking service, which has a clean interface and i
 | ------------ | -------- | ------------ | ------------------------------------------------------------------------ |
 | **`url`**    | `string` | Required     | The URL of the Uptime Kuma instance                                      |
 | **`apiKey`** | `string` | Required     | The API key (see https://github.com/louislam/uptime-kuma/wiki/API-Keys). |
+| **`hideStatus`** | `boolean` | _Optional_ | Optionally hide the up/ down status pill |
+| **`hideResponseTime`** | `boolean` | _Optional_ | Optionally hide the response time |
+| **`hideUptime`** | `boolean` | _Optional_ | Optionally hide the 24-hour uptime percentage |
+| **`statusLabels`** | `object` | _Optional_ | Optional text overrides for the status pill, keyed by status: `up`, `down`, `pending`, `maintenance`, `unknown` |
+
+Each monitor shows its status, response time and 24-hour uptime. Hover a monitor for its 30-day and 1-year uptime, and average response times. Hide any of the columns with the options above.
 
 #### Example
 
@@ -2752,42 +2935,8 @@ Linkding is a self-hosted bookmarking service, which has a clean interface and i
 
 #### Info
 
-- **CORS**: 🟢 Enabled
+- **CORS**: 🔴 Proxied
 - **Auth**: 🟢 Required
-- **Price**: 🟢 Free
-- **Host**: Self-Hosted (see [Uptime Kuma](https://github.com/louislam/uptime-kuma) )
-- **Privacy**: _See [Uptime Kuma](https://github.com/louislam/uptime-kuma)_
-
----
-
-### Uptime Kuma Status Page
-
-[Uptime Kuma](https://github.com/louislam/uptime-kuma) is an easy-to-use self-hosted monitoring tool.
-
-#### Options
-
-| **Field**          | **Type** | **Required** | **Description**                                                                   |
-| ------------------ | -------- | ------------ | --------------------------------------------------------------------------------- |
-| **`host`**         | `string` | Required     | The URL of the Uptime Kuma instance                                               |
-| **`slug`**         | `string` | Required     | The slug of the status page                                                       |
-| **`monitorNames`** | `strins` | _Optional_   | Names of monitored services (in the same order as on the kuma uptime status page) |
-
-#### Example
-
-```yaml
-- type: uptime-kuma-status-page
-  options:
-    host: http://localhost:3001
-    slug: another-beautiful-status-page
-    monitorNames:
-      - "Name1"
-      - "Name2"
-```
-
-#### Info
-
-- **CORS**: 🟢 Enabled
-- **Auth**: 🟢 Not Needed
 - **Price**: 🟢 Free
 - **Host**: Self-Hosted (see [Uptime Kuma](https://github.com/louislam/uptime-kuma) )
 - **Privacy**: _See [Uptime Kuma](https://github.com/louislam/uptime-kuma)_
@@ -3274,6 +3423,7 @@ Many websites and apps provide their own embeddable widgets. These can be used w
 **Field** | **Type** | **Required** | **Description**
 --- | --- | --- | ---
 **`html`** | `string` |  _Optional_ | HTML contents to render in the widget
+**`htmlSrc`** | `string` |  _Optional_ | A URL (local or remote) to fetch HTML contents from, instead of defining `html`
 **`script`** | `string` |  _Optional_ | Raw JavaScript code to execute (caution)
 **`scriptSrc`** | `string` |  _Optional_ | A URL to JavaScript content (caution)
 **`css`** | `string` |  _Optional_ | Any stylings for widget contents
@@ -3302,6 +3452,15 @@ Or
       css: '.coinmarketcap-currency-widget { color: var(--widget-text-color); }'
       html: '<div class="coinmarketcap-currency-widget" data-currencyid="1" data-base="USD" data-secondary="" data-ticker="true" data-rank="true" data-marketcap="true" data-volume="true" data-statsticker="true" data-stats="USD"></div>'
       scriptSrc: 'https://files.coinmarketcap.com/static/widget/currency.js'
+```
+
+Or fetch the markup from a file, so it's styled like the rest of your dashboard:
+
+```yaml
+- type: embed
+  options:
+    htmlSrc: /component.html
+    css: 'p { color: var(--widget-text-color); }'
 ```
 
 You can also use this widget to display an image, wither locally or from a remote origin.
@@ -3479,7 +3638,7 @@ Note that if you have many widgets, and set them to continuously update frequent
 
 If a widget fails to make a data request, and the console shows a CORS error, this means the server is blocking client-side requests.
 
-Dashy has a built-in CORS proxy ([`services/cors-proxy.js`](https://github.com/Lissy93/dashy/blob/master/services/cors-proxy.js)), which will be used automatically by some widgets, or can be forced to use by other by setting the `useProxy` option.
+Dashy has a built-in CORS proxy ([`services/endpoints/cors-proxy.js`](https://github.com/Lissy93/dashy/blob/master/services/endpoints/cors-proxy.js)), which will be used automatically by some widgets, or can be forced to use by other by setting the `useProxy` option.
 
 For example:
 
@@ -3497,6 +3656,28 @@ Alternatively, and more securely, you can set the auth headers on your service t
 Access-Control-Allow-Origin: https://location-of-dashy/
 Vary: Origin
 ```
+
+---
+
+### Ignoring Certificate Errors
+
+If you're calling a local service with a self-signed certificate, then you'll get an error (like `UNABLE_TO_VERIFY_LEAF_SIGNATURE` or `ERR_TLS_CERT_ALTNAME_INVALID`).
+
+If you trust the host, you can choose to skip certificate verification for that widget, by setting `allowInsecure: true`, this will fix your issue.
+
+Note that this only works if `useProxy: true` is also set, since browsers don't allow you to skip cert checks.
+
+```yaml
+widgets:
+- type: customapi
+  useProxy: true
+  allowInsecure: true
+  options:
+    url: https://tool.ad.local/api/status
+```
+
+> [!WARNING]
+> With verification off, nothing checks that you're talking to the server you think you are. Any headers you've set on the widget (API keys, basic auth) are sent over that unverified connection. Prefer fixing the certificate, or adding your CA with `NODE_EXTRA_CA_CERTS`, where you can.
 
 ---
 

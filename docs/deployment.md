@@ -66,7 +66,7 @@ Once you've got Dashy up and running, you'll want to configure it with your own 
 ## Requirements
 
 ### Architecture
-The pre-built Docker image runs on `amd64`, `arm64` and `armv7` (`armv6` is not supported).
+The pre-built Docker image runs on `amd64` and `arm64` (32-bit `armv7` and `armv6` are not supported). If you need armv7, pin an older release such as `lissy93/dashy:4.4.10`.
 
 ### System Resources
 - CPU: any single core, x86-64 or ARM
@@ -75,7 +75,7 @@ The pre-built Docker image runs on `amd64`, `arm64` and `armv7` (`armv6` is not 
 - Runs fine on a Pi 3 and up
 
 ### Bare Metal
-Requires [Node.js](https://nodejs.org/) (20+) and [Yarn](https://yarnpkg.com/)
+Requires [Node.js](https://nodejs.org/) LTS (22.22+, 24.15+ or 26+) and [Yarn](https://yarnpkg.com/)
 
 ### CDN / Cloud Deploy
 No specific requirements. The built app (without the Node server) is very lightweight and can be served by any static host or CDN. If you're using custom icons or other assets, additional disk space will be needed.

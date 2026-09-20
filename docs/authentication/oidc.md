@@ -28,6 +28,8 @@ appConfig:
       adminGroup: dashy-admins           # Members of this group are admins
       adminRole: dashy-admin             # Or grant admin by role instead
       enableSilentRenew: true            # Refresh the session in the background before it expires
+      # showLoginPage: false             # If true, login redirects to Dashy's own login page
+      # postLogoutRedirectUri: 'https://dashy.example.com' # Where to send users after logout (must be registered with the provider)
       # allowedIssuers: []               # Only for multi-tenant providers to override discovery document
       # disableServerSideCheck: false    # Leave as false / unset. Setting to true makes auth just client-side
 ```
@@ -65,6 +67,19 @@ When set, tokens are accepted only if their `iss` matches one of these (signatur
 ## Guest access
 
 Set `enableGuestAccess: true` to let people view the dashboard read-only without signing in. They get the full config but can't save anything, and sections or items marked `hideForGuests` stay hidden. With it off (the default), anyone who isn't signed in is sent to the login flow.
+
+## Showing Dashy's login page
+
+By default, anyone who isn't signed in is sent straight to your provider's login page (or, with `enableGuestAccess: true`, straight into the dashboard as a guest). Set `showLoginPage: true` under `auth.oidc` to show Dashy's own login page first instead:
+
+```yaml
+    oidc:
+      clientId: dashy
+      endpoint: 'https://your-oidc-provider.example.com'
+      showLoginPage: true
+```
+
+The page has a button to sign in with your provider, plus a *Proceed as Guest* button if guest access is enabled, so the user picks which they want. This is useful when Dashy is the landing page after another redirect (e.g. a captive portal), where an immediate second redirect off to the IdP is disorienting. It's shown on each page load until you sign in; the choice isn't remembered. See [#2302](https://github.com/lissy93/dashy/issues/2302) for info.
 
 ## Using with a PWA
 
@@ -104,3 +119,16 @@ Notes:
 - If a silent renewal fails for any reason (no refresh token issued, refresh token expired or revoked, the provider returns no fresh id_token, a provider error), Dashy falls back to the normal interactive sign-in. Renewal can save a round-trip, but the interactive flow always remains the safety net.
 - Renewal is driven by the access token's lifetime. If your provider issues an id_token with a much shorter lifetime than the access token, renewal may lag; keeping the two lifetimes equal (the common default) works best.
 - With multiple tabs open against a provider that rotates refresh tokens on use, tabs can briefly contend for the refresh token; the affected tab simply falls back to interactive sign-in. This is inherent to browser-based refresh tokens, not specific to Dashy.
+
+## Setting logout redirect URL
+
+When you log out, Dashy sends you to your provider's logout page, and by default that's where you stay. Set `postLogoutRedirectUri` if you'd like the provider to send you back to Dashy (or anywhere else) once it's done:
+
+```yaml
+    oidc:
+      clientId: dashy
+      endpoint: 'https://your-oidc-provider.example.com'
+      postLogoutRedirectUri: 'https://dashy.example.com'
+```
+
+The URL is sent to the provider as `post_logout_redirect_uri`, so it needs to be registered as a valid post-logout redirect URI in your client's settings - most providers have a field for this right next to the sign-in redirect URIs. If it's not registered, many providers will show an error instead of completing the logout, so give the logout button a quick test after setting it. Left unset, nothing changes and logout ends at the provider as before. See [#2261](https://github.com/lissy93/dashy/issues/2261) for info.
