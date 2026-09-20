@@ -18,6 +18,7 @@ const METHODS = [
   { name: 'NixOS', link: '/docs/deployment/self-hosted-os#nixos', icon: icon('nixos.png'), category: 'Operating Systems' },
   { name: 'Kubernetes', link: '/docs/deployment/self-hosted-os#kubernetes', icon: icon('kubernetes.png'), category: 'Operating Systems' },
   { name: 'Portainer', link: '/docs/deployment/self-hosted-platforms#portainer', icon: icon('portainer.png'), official: true, category: 'Platforms' },
+  { name: 'Hostinger', link: '/docs/deployment/cloud#managed-hosting', icon: icon('hostinger.png'), externalLink: 'https://www.hostinger.com/applications/dashy', official: true, category: 'Managed Hosting' },
   { name: 'Coolify', link: '/docs/deployment/self-hosted-platforms#coolify', icon: icon('coolify.png'), category: 'Platforms' },
   { name: '1Panel', link: '/docs/deployment/self-hosted-platforms#1panel', icon: icon('1panel.png'), externalLink: 'https://1panel.pro/apps/dashy', category: 'Platforms' },
   { name: 'Runtipi', link: '/docs/deployment/self-hosted-platforms#runtipi', icon: icon('runtipi.png'), category: 'Platforms' },
@@ -43,7 +44,6 @@ const METHODS = [
   { name: 'Google Cloud Run', link: '/docs/deployment/cloud#google-cloud-run', icon: icon('google-cloud-run.png'), category: 'Container Services' },
   { name: 'Elestio', link: '/docs/deployment/cloud#managed-hosting', icon: icon('elestio.png'), externalLink: 'https://elest.io/open-source/dashy', category: 'Managed Hosting' },
   { name: 'PikaPods', link: '/docs/deployment/cloud#managed-hosting', icon: icon('pikapods.png'), category: 'Managed Hosting' },
-  { name: 'Hostinger', link: '/docs/deployment/cloud#managed-hosting', icon: icon('hostinger.png'), externalLink: 'https://www.hostinger.com/applications/dashy', category: 'Managed Hosting' },
 ];
 
 const CATEGORIES = [...new Set(METHODS.map((m) => m.category))];
